@@ -32,7 +32,7 @@ RUN set -eux ; \
         exit 1 ; \
     fi
 
-FROM rockylinux:8.9
+FROM rockylinux:9.3
 RUN set -eux ; \
     dnf install -y \
       bzip2 \
@@ -123,16 +123,18 @@ ENV PATH=/opt/hadoop/libexec:$PATH:$JAVA_HOME/bin:/opt/hadoop/bin
 
 #hadoop native library
 RUN set -eux ; \
-    ARCH="$(arch)" ; \
-    case "${ARCH}" in \
-        x86_64)  echo "hadoop native library not available for x86_64 architecture";; \
-        aarch64) url='https://github.com/ChenSammi/ozone-docker-runner/blob/master/lib/hadoop-3.3.6/libhadoop.dylib' ; \
-                 curl -L ${url} -o libhadoop.dylib ; \
-                 ;; \
-        *) echo "Unsupported architecture: ${ARCH}"; exit 1 ;; \
-    esac; \
-    chmod 755 libhadoop.dylib && \
-    mv libhadoop.dylib $LD_LIBRARY_PATH/
+   ARCH="$(arch)" ; \
+   case "${ARCH}" in \
+       x86_64)  url='https://github.com/ChenSammi/ozone-docker-runner/blob/personal/lib/hadoop-3.3.6/x86_64/linux/libhadoop.so.1.0.0?raw=true' ; \
+                ;; \
+       aarch64) url='https://github.com/ChenSammi/ozone-docker-runner/blob/personal/lib/hadoop-3.3.6/aarch64/linux/libhadoop.so.1.0.0?raw=true' ; \
+                ;; \
+    *) echo "Unsupported architecture: ${ARCH}"; exit 1 ;; \
+   esac && \
+   curl -L ${url} -o libhadoop.so.1.0.0 && \
+   chmod 755 libhadoop.so.1.0.0 && \
+   mv libhadoop.so.1.0.0 $LD_LIBRARY_PATH && \
+   ln -s $LD_LIBRARY_PATH/libhadoop.so.1.0.0 $LD_LIBRARY_PATH/libhadoop.so
 
 RUN id=1000; \
     for u in hadoop om dn scm s3g recon testuser testuser2 httpfs; do \
